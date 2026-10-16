@@ -1,11 +1,15 @@
 {
   "swift_files_syntax_parsed": 10,
-  "xcode_project_references": "valid",
-  "plist_and_scheme": "valid",
-  "asset_catalogs": "valid",
-  "workflow": "valid",
-  "native_build": "NOT RUN \u2014 Xcode unavailable",
-  "xctest": "NOT RUN \u2014 simulator unavailable",
-  "device_test": "NOT RUN",
-  "ipa_produced": false
+  "native_build": "passed \u2014 Xcode 16.4, Release iphoneos arm64",
+  "xctest": {
+    "passed": 7,
+    "failed": 0,
+    "platform": "iPhone simulator"
+  },
+  "source_commit": "260e4c65dc2fbb87ad2990f29d746ace9c8fb409",
+  "build_url": "https://github.com/PainBurger100/Camera-save/actions/runs/38905741338",
+  "ipa_produced": true,
+  "ipa_signed": false,
+  "physical_device_test": "not run",
+  "ipa_sha256": "1d140fe6fdeb426ebb35e771eaa71bcc64b00f23c89cb14a6c913e0b2164c52c"
 }

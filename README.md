@@ -2,7 +2,18 @@
 
 Native SwiftUI photo review for iOS 17 or later. Swipe right to keep and left to pass. Undo before deleting. When you finish, review a list of passed photos and explicitly confirm deletion of those originals. Keepers stay where they were; there is no keeper-download step.
 
-## Windows: build and sideload without owning a Mac
+## Download and install on Windows
+
+The first iPhone build is ready: [download Foliow-unsigned.ipa](https://foliow-photo-sorter.indigoridge.chatgpt.site/downloads/Foliow-unsigned.ipa). Requires iOS 17 or later. [Successful hosted build and artifacts](https://github.com/PainBurger100/Camera-save/actions/runs/38905741338).
+
+1. Install [Sideloadly](https://sideloadly.io) on Windows and follow its Apple-driver requirements.
+2. Connect and unlock your iPhone, then trust the computer.
+3. Select the IPA in Sideloadly, sign with your own Apple ID, and install it. [AltStore Classic](https://altstore.io) is an alternative signing tool.
+4. Enable Developer Mode and trust the developer profile in iPhone Settings if prompted. Free Apple signing generally needs renewal every seven days.
+
+The downloadable IPA is unsigned. The GitHub build compiled successfully and all seven deletion-safety tests passed in an iPhone simulator. Actual device installation and photo-provider behavior still need testing on your iPhone. For the first device check, use a folder of disposable photo copies.
+
+## Rebuild from Windows without owning a Mac
 
 This download is the complete source project, not an IPA. A hosted Mac must compile it once. The included GitHub Actions workflow does that without requesting Apple signing credentials. GitHub-hosted macOS runners may require Actions minutes or billing depending on your account and repository settings.
 
@@ -36,8 +47,12 @@ Open `Foliow.xcodeproj`, select the Foliow target → Signing & Capabilities, ch
 
 ## Verification and build status
 
-Checked in the authoring environment: all Swift files parsed without syntax errors; Xcode project references, scheme XML, property lists, asset catalogs, and workflow configuration validated. Xcode, iOS SDKs, simulator and Apple signing tools were unavailable, so this project has **not yet been compiled or run on an iPhone**. The included hosted build workflow must succeed before an IPA exists. Signing and device testing remain required.
+- Xcode 16.4 simulator build and device Release build: passed.
+- Seven deletion-safety XCTest cases: passed, zero failures.
+- IPA inspected: arm64 device binary, iOS 17 minimum, correct Payload/Foliow.app structure, no test bundle.
+- Built source commit: `260e4c65dc2fbb87ad2990f29d746ace9c8fb409`.
+- Build: https://github.com/PainBurger100/Camera-save/actions/runs/38905741338
+- IPA SHA-256: `1d140fe6fdeb426ebb35e771eaa71bcc64b00f23c89cb14a6c913e0b2164c52c`.
+- Apple ID signing, installation and testing on a physical iPhone remain required.
 
-The seven included XCTest cases check that deletion removes only passed originals, protects keepers and unreviewed files, refuses changed originals and path traversal, excludes symlinks, and restores decisions only for unchanged files. These tests are configured to run in GitHub Actions; they were not executed in this Linux environment.
-
-No signed or unsigned IPA is included in this source download.
+The XCTest cases verify that deletion removes only passed originals, protects keepers and unreviewed files, refuses changed originals and path traversal, excludes symlinks, and restores decisions only for unchanged files. No personal photos were used for these tests.
