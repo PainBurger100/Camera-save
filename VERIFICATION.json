@@ -1,0 +1,11 @@
+{
+  "swift_files_syntax_parsed": 10,
+  "xcode_project_references": "valid",
+  "plist_and_scheme": "valid",
+  "asset_catalogs": "valid",
+  "workflow": "valid",
+  "native_build": "NOT RUN \u2014 Xcode unavailable",
+  "xctest": "NOT RUN \u2014 simulator unavailable",
+  "device_test": "NOT RUN",
+  "ipa_produced": false
+}

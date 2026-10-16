@@ -1,0 +1,60 @@
+name: Build iPhone IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, codex/foliow-iphone]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show selected Xcode
+        run: xcodebuild -version
+      - name: Choose an available iPhone simulator
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '-j']))['devices']
+          phones = [d for runtime, values in devices.items() if 'iOS' in runtime for d in values if d.get('isAvailable') and d['name'].startswith('iPhone')]
+          if not phones:
+              raise SystemExit('No available iPhone simulator on this runner')
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('SIMULATOR_ID=' + phones[0]['udid'] + '\n')
+          PY
+      - name: Test deletion safeguards on simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Foliow.xcodeproj -scheme Foliow \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -resultBundlePath build/TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Build unsigned iPhone app
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Foliow.xcodeproj -scheme Foliow \
+            -configuration Release -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/Device \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+      - name: Package unsigned IPA for Windows signing tools
+        run: |
+          mkdir -p build/Package/Payload
+          cp -R build/Device/Build/Products/Release-iphoneos/Foliow.app build/Package/Payload/
+          cd build/Package
+          ditto -c -k --sequesterRsrc --keepParent Payload ../Foliow-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Foliow-iPhone
+          path: build/Foliow-unsigned.ipa
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Foliow-test-results
+          path: build/TestResults.xcresult
+          if-no-files-found: ignore
