@@ -30,6 +30,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm test
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Download a public Canon CR2 test fixture
+        run: |
+          $raw = Join-Path $env:RUNNER_TEMP 'foliow-canon.CR2'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/letmaik/rawpy/main/test/RAW_CANON_40D_SRAW_V103.CR2' -OutFile $raw
+          $hash = (Get-FileHash $raw -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne '152382ce4dbf644899d12b41b4c577f07638aa3ec5745ac344c36bad93826125') { throw 'Canon fixture checksum mismatch' }
+          "FOLIOW_SMOKE_RAW=$raw" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Verify native Windows app startup, preview and recycling
         run: npm run smoke
       - name: Build installer and portable application

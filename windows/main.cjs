@@ -44,7 +44,8 @@ async function runSmoke(){
   let root;
   try{
     const os=require('node:os');root=await fs.mkdtemp(path.join(os.tmpdir(),'foliow-photos-'));
-    await fs.copyFile(path.join(__dirname,'ui','assets','demo-1.jpg'),path.join(root,'sample.jpg'));
+    await fs.copyFile(path.join(__dirname,'ui','assets','demo-1.jpg'),path.join(root,'01-sample.jpg'));
+    if(process.env.FOLIOW_SMOKE_RAW)await fs.copyFile(process.env.FOLIOW_SMOKE_RAW,path.join(root,'02-canon.CR2'));
     const loaded=await photos.openFolder(root);
     const appState=await window.webContents.executeJavaScript('({title:document.title,ready:!!document.getElementById("folder-title"),bridge:typeof window.foliow.chooseFolder,node:typeof window.require})');
     if(!appState.ready||appState.bridge!=='function'||appState.node!=='undefined')throw new Error('The desktop workspace or isolated bridge did not initialize.');
@@ -52,10 +53,16 @@ async function runSmoke(){
     // Verify the same renderer path used to restore a real session, including image decoding.
     const renderResult=await window.webContents.executeJavaScript(`window.__foliowSmokeImport(${JSON.stringify(loaded)})`);
     if(renderResult!==true)throw new Error('The sample photo failed to render.');
-    await photos.setDecision(loaded.sessionId,loaded.files[0].desktopId,'pass');const deletion=photos.prepareDeletion(loaded.sessionId);
-    const recycled=await photos.recycle(deletion.token,async()=>true);if(recycled.deleted.length!==1)throw new Error('Windows recycling failed: '+JSON.stringify(recycled.errors));
+    if(process.env.FOLIOW_SMOKE_RAW){
+      const jpeg=loaded.files.find(f=>f.name.endsWith('.jpg'));await photos.setDecision(loaded.sessionId,jpeg.desktopId,'keep');
+      const rawResult=await window.webContents.executeJavaScript(`window.__foliowSmokeImport(${JSON.stringify(photos.snapshot())})`);
+      const rawLabel=await window.webContents.executeJavaScript('document.getElementById("preview-kind").textContent');
+      if(rawResult!==true||!rawLabel.includes('RAW'))throw new Error('Canon CR2 preview failed: '+rawLabel);
+    }
+    for(const file of loaded.files)await photos.setDecision(loaded.sessionId,file.desktopId,'pass');const deletion=photos.prepareDeletion(loaded.sessionId);
+    const recycled=await photos.recycle(deletion.token,async()=>true);if(recycled.deleted.length!==loaded.files.length)throw new Error('Windows recycling failed: '+JSON.stringify(recycled.errors));
     const cleared=await window.webContents.executeJavaScript(`window.__foliowSmokeImport(${JSON.stringify(recycled.session)})`);if(cleared!==true)throw new Error('The gallery did not clear after recycling its last photo.');
-    console.log('SMOKE PASSED: isolated renderer, native folder/read bridge, JPEG preview, and native recycling of one disposable fixture.');
+    console.log('SMOKE PASSED: isolated renderer, native folder/read bridge, JPEG/CR2 preview, and native recycling of disposable fixtures.');
     app.exit(0);
   }catch(error){console.error('SMOKE FAILED:',error.stack||error.message);app.exit(1);}
 }
