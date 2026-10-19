@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {ReviewModel,fileKey} from '../ui/model.mjs';
+const photo=(name,path=name)=>({name,size:100,lastModified:1,webkitRelativePath:path});
+test('folder import supports camera RAW and major formats, filters sidecars, sorts naturally and deduplicates',()=>{const m=new ReviewModel(),files=[photo('IMG_10.CR2'),photo('IMG_2.NEF'),photo('IMG_1.HEIC'),photo('edit.xmp'),photo('IMG_10.CR2')];m.load(files);assert.deepEqual(m.items.map(i=>i.file.name),['IMG_1.HEIC','IMG_2.NEF','IMG_10.CR2']);assert.equal(m.counts().total,3)});
+test('keep/pass flow completes without skipping photos, and undo restores the final photo',()=>{const m=new ReviewModel();m.load([photo('1.cr2'),photo('2.jpg'),photo('3.png')]);m.choose('keep');m.choose('pass');m.choose('keep');assert.equal(m.current(),undefined);assert.deepEqual(m.counts(),{total:3,keep:2,pass:1,pending:0});m.undo();assert.equal(m.current().file.name,'3.png');assert.equal(m.counts().pending,1)});
+test('reselecting folder restores decisions and keepers can be reconsidered',()=>{const f=photo('1.cr2','Trip/1.cr2'),m=new ReviewModel();m.load([f,photo('2.heic')],{[fileKey(f)]:'keep'});assert.equal(m.current().file.name,'2.heic');m.view='keep';m.choose('pass');assert.equal(m.counts().keep,0);assert.equal(m.counts().pass,1);m.undo();assert.equal(m.view,'keep');assert.equal(m.current().file.name,'1.cr2')});
+test('skip leaves a photo unreviewed and duplicate names in separate subfolders remain separate',()=>{const m=new ReviewModel();m.load([photo('1.jpg','A/1.jpg'),photo('1.jpg','B/1.jpg')]);const before=m.current().id;m.skip();assert.notEqual(m.current().id,before);assert.equal(m.counts().pending,2)});

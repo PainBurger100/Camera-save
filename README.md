@@ -1,4 +1,8 @@
-# Foliow for iPhone
+# Foliow — iPhone and Windows
+
+The native Windows desktop app is in [`windows/`](windows/README.md). Its separate **Build Windows app** workflow produces an installer and portable executable with bundled RAW decoders and confirmed recycling of passed originals.
+
+## iPhone app
 
 Native SwiftUI photo review for iOS 17 or later. Swipe right to keep and left to pass. Undo before deleting. When you finish, review a list of passed photos and explicitly confirm deletion of those originals. Keepers stay where they were; there is no keeper-download step.
 

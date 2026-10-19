@@ -1,0 +1,64 @@
+name: Build Windows app
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, codex/foliow-windows]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/build-windows.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+      - name: Install build tools and bundled Electron runtime
+        run: npm ci --no-audit --no-fund
+      - name: Check JavaScript and run deletion safeguards
+        run: |
+          npm run check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify native Windows app startup, preview and recycling
+        run: npm run smoke
+      - name: Build installer and portable application
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run build:win
+      - name: Verify packaged Windows app
+        run: |
+          $app = Join-Path (Get-Location) 'release/win-unpacked/Foliow.exe'
+          if (!(Test-Path $app)) { throw 'Packaged Foliow.exe is missing' }
+          $process = Start-Process -FilePath $app -ArgumentList '--smoke-test' -PassThru
+          if (!$process.WaitForExit(90000)) { $process.Kill(); throw 'Packaged application smoke test timed out' }
+          if ($process.ExitCode -ne 0) { throw "Packaged application smoke test failed: $($process.ExitCode)" }
+      - name: Compute executable checksums
+        run: |
+          Get-FileHash release/Foliow-*-x64.exe -Algorithm SHA256 | Format-List | Out-File release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Foliow-Windows-Installer
+          path: |
+            windows/release/Foliow-Setup-*-x64.exe
+            windows/release/SHA256SUMS.txt
+          compression-level: 0
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Foliow-Windows-Portable
+          path: |
+            windows/release/Foliow-Portable-*-x64.exe
+            windows/release/SHA256SUMS.txt
+          compression-level: 0
+          if-no-files-found: error

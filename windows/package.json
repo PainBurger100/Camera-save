@@ -1,0 +1,75 @@
+{
+  "name": "foliow-windows",
+  "version": "1.0.0",
+  "description": "Local photo review with RAW previews and confirmed recycling of passed originals",
+  "main": "main.cjs",
+  "author": "Foliow",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check photo-session.cjs && node --check ui/app.js",
+    "smoke": "electron . --smoke-test",
+    "build:win": "electron-builder --win --x64",
+    "postinstall": "node scripts/vendor.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3",
+    "linkedom": "0.18.13",
+    "exifr": "7.1.3",
+    "utif": "3.1.0",
+    "heic2any": "0.0.4",
+    "libraw-wasm-nothread": "1.6.0-nothread.1",
+    "extract-raw-preview": "1.1.0"
+  },
+  "build": {
+    "appId": "com.foliow.windows",
+    "productName": "Foliow",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "photo-session.cjs",
+      "ui/**/*",
+      "LICENSE",
+      "README.md",
+      "package.json",
+      "build/icon.ico"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "Foliow-Setup-${version}-x64.exe"
+    },
+    "portable": {
+      "artifactName": "Foliow-Portable-${version}-x64.exe"
+    }
+  },
+  "type": "module"
+}
