@@ -54,6 +54,7 @@ async function runSmoke(){
     if(renderResult!==true)throw new Error('The sample photo failed to render.');
     await photos.setDecision(loaded.sessionId,loaded.files[0].desktopId,'pass');const deletion=photos.prepareDeletion(loaded.sessionId);
     const recycled=await photos.recycle(deletion.token,async()=>true);if(recycled.deleted.length!==1)throw new Error('Windows recycling failed: '+JSON.stringify(recycled.errors));
+    const cleared=await window.webContents.executeJavaScript(`window.__foliowSmokeImport(${JSON.stringify(recycled.session)})`);if(cleared!==true)throw new Error('The gallery did not clear after recycling its last photo.');
     console.log('SMOKE PASSED: isolated renderer, native folder/read bridge, JPEG preview, and native recycling of one disposable fixture.');
     app.exit(0);
   }catch(error){console.error('SMOKE FAILED:',error.stack||error.message);app.exit(1);}
